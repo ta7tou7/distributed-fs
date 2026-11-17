@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/common",
+    "crates/master",
+    "crates/chunkserver",
+    "crates/client",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+[workspace.dependencies]
+common = {path = "crates/common"}
