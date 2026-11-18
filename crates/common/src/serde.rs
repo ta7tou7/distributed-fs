@@ -2,7 +2,7 @@ use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
 
 pub trait Serialize {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<usize>;
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()>;
 }
 
 pub trait Deserialize: Sized {
@@ -13,8 +13,8 @@ macro_rules! impl_serialize_for_numeric {
     ($($t:ty),*) => {
         $(
             impl Serialize for $t {
-                fn serialize<W: Write>(&self, writer: &mut W) -> Result<usize> {
-                    writer.write(&self.to_le_bytes())
+                fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+                    writer.write_all(&self.to_le_bytes())
                 }
             }
 
@@ -36,8 +36,8 @@ fn to_error(err: FromUtf8Error) -> Error {
 }
 
 impl Serialize for bool {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<usize> {
-        writer.write(&[if *self { 1 } else { 0 }])
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        writer.write_all(&[if *self { 1 } else { 0 }])
     }
 }
 
@@ -53,13 +53,13 @@ impl Deserialize for bool {
     }
 }
 impl Serialize for String {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<usize> {
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
         let bytes = self.as_bytes();
         // sending 4 byte for length
         let len = bytes.len() as u32;
         len.serialize(writer)?;
         // sending the actual payload
-        writer.write(&bytes)
+        writer.write_all(&bytes)
     }
 }
 

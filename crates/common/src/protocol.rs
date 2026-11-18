@@ -6,7 +6,7 @@ pub enum ChunkServerMessage {
 }
 
 impl Serialize for ChunkServerMessage {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<usize> {
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
         match self {
             ChunkServerMessage::Join => 0u8.serialize(writer),
             ChunkServerMessage::HeartBeat => 1u8.serialize(writer),
