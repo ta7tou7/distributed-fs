@@ -1,6 +1,7 @@
 use std::io::Write;
 use std::net::TcpStream;
 use std::{env, thread};
+use std::io::ErrorKind::BrokenPipe;
 use std::time::Duration;
 use common::protocol::ChunkServerMessage;
 use common::serde::Serialize;
@@ -12,18 +13,24 @@ pub mod config;
 fn main() {
     let config = Config::build(env::args()).unwrap();
     thread::spawn(move || {
-        thread::sleep(Duration::from_millis(50));
-        let mut connect = TcpStream::connect(format!("{host}:{port})", host=config.master_host, port=config.master_port))
-            .expect("Failed to connect to Master on port 12000");
-        let join = ChunkServerMessage::Join;
-        let res = join.serialize(&mut connect);
-        match res {
-            Ok(_) => println!("Succeeded"),
-            Err(e) => {
-                println!("failed to serialize chunk server response: {}", e);
+        let mut connect = TcpStream::connect(format!("{host}:{port}", host=config.master_host, port=config.master_port))
+            .expect(format!("Failed to connect to Master on port {port}", port=config.master_port).as_str());
+        loop {
+            let heart_beat = ChunkServerMessage::HeartBeat;
+            let res = heart_beat.serialize(&mut connect);
+            match res {
+                Ok(_) => println!("Succeeded"),
+                Err(e) if e.kind() == BrokenPipe => {
+                    println!("Master connection closed");
+                    break;
+                },
+                Err(e) => {
+                    println!("failed to serialize chunk server response: {}", e);
+                    break;
+                }
             }
+            thread::sleep(Duration::from_secs(1));
         }
-        connect.flush().unwrap();
     });
     server::start_server(config.port);
 
