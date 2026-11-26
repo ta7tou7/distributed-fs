@@ -1,13 +1,6 @@
+use crate::protocol::{Deserialize, Serialize};
 use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
-
-pub trait Serialize {
-    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()>;
-}
-
-pub trait Deserialize: Sized {
-    fn deserialize<R: Read>(reader: &mut R) -> Result<Self>;
-}
 
 macro_rules! impl_serialize_for_numeric {
     ($($t:ty),*) => {
@@ -29,7 +22,9 @@ macro_rules! impl_serialize_for_numeric {
     };
 }
 // Apply the macro to all target types at once
-impl_serialize_for_numeric!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
+impl_serialize_for_numeric!(
+    u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64, usize
+);
 
 fn to_error(err: FromUtf8Error) -> Error {
     Error::new(ErrorKind::InvalidInput, err)
